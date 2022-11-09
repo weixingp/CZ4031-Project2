@@ -12,3 +12,11 @@ def seq_scan_annotation(table_name: str, q_filter: str) -> str:
     reason = f"Sequential scan on {table_name} is faster due to low selectivity of predicate {q_filter}."
 
     return f"{description} {reason}"
+
+def sample(table_name: str, q_filter: str) -> str:
+
+    description = "Sample text."
+   
+    reason = f"Sequential scan on {table_name} is faster due to low selectivity of predicate {q_filter}."
+
+    return f"{description} {reason}"
