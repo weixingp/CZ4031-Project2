@@ -1,12 +1,21 @@
 from tkinter import *
 
-def click():
-    entered_text = textinput.get()
+def getinput():
+    global output, query
+    query = textinput.get("1.0", END) 
+    output = processQuery(query)
+    if output:
+        pagechange()
+    # else:
+    #     messagebox.showerror("Error", "Invalid Input!\nInput SQL query")
 
+#using this to change pages first
+def change():
+    pagechange()
 
-def page1(root):
+def mainpage(root):
 
-    title = Label(root, text="       SQL Query Annotator       ", bg="#3B86A7", fg="white", font="Inter 48", )
+    title = Label(root, text="SQL Query Annotator", height=1, width=25, bg="#3B86A7", fg="white", font="Inter 48")
     title.place(anchor=CENTER, relx=0.5, rely=0.12)
 
 
@@ -17,24 +26,25 @@ def page1(root):
     textinput.place(x=180,y=160)
 
 
-    input_button = Button(root, text = "Annotate", width=10, height=1, bg="#3B86A7", fg="white", font="Inter 16", command=click)
+    input_button = Button(root, text = "Annotate", width=10, height=1, bg="#3B86A7", fg="white", font="Inter 16", command=change)
     input_button.place(x=532,y=420)
 
+def outputpage(root):
+    title = Label(root, text="Query Annotation", width=25, bg="#3B86A7", fg="white", font="Inter 48")
+    title.place(anchor=CENTER, relx=0.5, rely=0.12)
 
-
-# Label(window, text="\nOutput:", bg="white", fg="black", font="none 12 bold") .grid(row=4, column=0,sticky=W)
-# output = Text(window, width=75, height=6, wrap=WORD, background="white")
-# output.grid(row=5, column=0, columnspan=2, sticky=W)
+    home_button = Button(root, text = "Back", width=5, height=1, bg="#3B86A7", fg="white", font="Inter 16", command=change)
+    home_button.place(x=25,y=35)
 
 def pagechange():
     global page_num, root
     for widget in root.winfo_children():
         widget.destroy()
     if page_num == 1:
-        page2(root)
+        outputpage(root)
         page_num = 2
     else:
-        page1(root)
+        mainpage(root)
         page_num = 1
 
 page_num = 1
@@ -44,5 +54,5 @@ root.geometry("850x500")
 root.resizable(False, False)
 root.title("CZ4031 Database System Principles GUI")
 root.configure(background="white")
-page1(root)
+mainpage(root)
 root.mainloop()
