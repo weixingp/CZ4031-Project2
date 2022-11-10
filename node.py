@@ -4,12 +4,13 @@ supported_node_types = [
     "Sort",
     "Seq Scan",
     "Index Scan",
+    "Bitmap Heap Scan",
     "Hash Join",
+    "Merge Join",
     "Aggregate",
     "Hash",
     "Nested Loop",
     "Limit",
-    "Merge Join"
 ]
 
 
@@ -46,15 +47,15 @@ class PlanNode:
                 f = "()"
             return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=f)
         elif node_type == "Index Scan":
-
             if "Index Cond" in plan:
                 cond = plan["Index Cond"]
             elif "Filter" in plan:
                 cond = plan["Filter"]
             else:
                 cond = ""
-
             return IndexScanNode(cost=cost, table_name=plan["Relation Name"], cond=cond)
+        elif node_type == "Bitmap Heap Scan":
+            return BitMapHeapScanNode(cost=cost, table_name=plan["Relation Name"])
         elif node_type == "Hash Join":
             return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
         elif node_type == "Merge Join":
@@ -121,6 +122,23 @@ class IndexScanNode(PlanNode):
         super().__init__(cost)
         self.table_name = table_name
         self.cond = cond
+
+    def get_annotations(self) -> str:
+        text = ""
+        return text
+
+
+class BitMapHeapScanNode(PlanNode):
+    type = "Bitmap Heap Scan"
+
+    def __init__(self, cost: float, table_name: str):
+        """
+        Index Scan scan node
+        :param cost: Total cost
+        :param table_name: The table name the scan is run on
+        """
+        super().__init__(cost)
+        self.table_name = table_name
 
     def get_annotations(self) -> str:
         text = ""
