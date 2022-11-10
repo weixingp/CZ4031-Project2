@@ -8,7 +8,8 @@ supported_node_types = [
     "Aggregate",
     "Hash",
     "Nested Loop",
-    "Limit"
+    "Limit",
+    "Merge Join"
 ]
 
 
@@ -39,7 +40,11 @@ class PlanNode:
         if node_type == "Sort":
             return SortNode(cost=cost, sort_keys=plan["Sort Key"])
         elif node_type == "Seq Scan":
-            return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=plan["Filter"])
+            if "Filter" in plan:
+                f = plan["Filter"]
+            else:
+                f = "()"
+            return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=f)
         elif node_type == "Index Scan":
 
             if "Index Cond" in plan:
@@ -52,6 +57,8 @@ class PlanNode:
             return IndexScanNode(cost=cost, table_name=plan["Relation Name"], cond=cond)
         elif node_type == "Hash Join":
             return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
+        elif node_type == "Merge Join":
+            return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
             return AggregateNode(cost=cost, group_keys=plan["Group Key"])
         elif node_type == "Hash":
@@ -125,7 +132,24 @@ class HashJoinNode(PlanNode):
 
     def __init__(self, cost: float, cond: str):
         """
-        Hash Join scan node
+        Hash Join node
+        :param cost: Total cost
+        :param cond: The condition of the join is run on
+        """
+        super().__init__(cost)
+        self.cond = cond
+
+    def get_annotations(self) -> str:
+        text = ""
+        return text
+
+
+class MergeJoinNode(PlanNode):
+    type = "Merge Join"
+
+    def __init__(self, cost: float, cond: str):
+        """
+        Merge Join node
         :param cost: Total cost
         :param cond: The condition of the join is run on
         """
