@@ -41,6 +41,7 @@ page_num = 1
 
 root = Tk()
 root.geometry("850x500")
+root.resizable(False, False)
 root.title("CZ4031 Database System Principles GUI")
 root.configure(background="white")
 page1(root)
