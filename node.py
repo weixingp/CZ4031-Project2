@@ -1,4 +1,5 @@
-from annotation import sort_annotation, seq_scan_annotation
+from annotation import *
+
 
 supported_node_types = [
     "Sort",
@@ -140,7 +141,7 @@ class IndexScanNode(PlanNode):
         self.cond = cond
 
     def get_annotations(self) -> str:
-        text = ""
+        text = index_scan_annotation(self.table_name,self.cond)
         return text
 
 
@@ -157,7 +158,7 @@ class BitMapHeapScanNode(PlanNode):
         self.table_name = table_name
 
     def get_annotations(self) -> str:
-        text = ""
+        text = bit_map_heap_scan_annotation(self.table_name)
         return text
 
 
@@ -174,7 +175,7 @@ class HashJoinNode(PlanNode):
         self.cond = cond
 
     def get_annotations(self) -> str:
-        text = ""
+        text = hash_join_annotation(self.cond)
         return text
 
 
@@ -191,7 +192,7 @@ class MergeJoinNode(PlanNode):
         self.cond = cond
 
     def get_annotations(self) -> str:
-        text = ""
+        text = merge_join_annotation(self.cond)
         return text
 
 
@@ -208,7 +209,7 @@ class AggregateNode(PlanNode):
         self.group_keys = group_keys
 
     def get_annotations(self) -> str:
-        text = ""
+        text = aggregate_annotation(self.group_keys)
         return text
 
 
@@ -223,7 +224,7 @@ class HashNode(PlanNode):
         super().__init__(cost)
 
     def get_annotations(self) -> str:
-        text = ""
+        text = hash_annotation()
         return text
 
 
@@ -238,7 +239,7 @@ class NestedLoop(PlanNode):
         super().__init__(cost)
 
     def get_annotations(self) -> str:
-        text = ""
+        text = nested_loop_annotation()
         return text
 
 
@@ -253,7 +254,7 @@ class LimitNode(PlanNode):
         super().__init__(cost)
 
     def get_annotations(self) -> str:
-        text = ""
+        text = limit_annotation()
         return text
 
 
@@ -269,5 +270,5 @@ class UndefinedNode(PlanNode):
         self.type = type_name
 
     def get_annotations(self) -> str:
-        text = ""
+        text = undefined_annotation()
         return text
