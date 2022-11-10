@@ -11,6 +11,7 @@ def template_annotation() -> str:
 
     return f"{description} {reason}"
 
+
 def sort_annotation(sort_keys: list) -> str:
     keys = ", ".join(sort_keys)
     description = f"Sort with the following sort keys: {keys}"
@@ -25,6 +26,13 @@ def seq_scan_annotation(table_name: str, q_filter: str) -> str:
 
     return f"{description} {reason}"
 
+
+def bit_map_heap_scan_annotation(table_name: str) -> str:
+
+    description = "Tables are read using Bitmap heap scan."
+    reason = f"Bitmap heap scan on {table_name} is faster here."
+
+    return f"{description} {reason}"
 
 
 def index_scan_annotation(table_name: str, cond: str) -> str:
@@ -43,6 +51,14 @@ def hash_join_annotation(cond: str) -> str:
     return f"{description} {reason}"
 
 
+def merge_join_annotation(cond: str) -> str:
+
+    description = "Merge Join is used."
+    reason = f"merge join is implemented because of {cond}."
+
+    return f"{description} {reason}"
+
+
 def aggregate_annotation(group_keys:list) -> str:
 
     description = "Aggregation is performed here."
@@ -55,14 +71,27 @@ def aggregate_annotation(group_keys:list) -> str:
 def hash_annotation() -> str:
 
     description = "hash is implemented here"
-    reason = f"Maybe no need a reason to sort"
+    reason = f"Maybe no need a reason to hash"
 
     return f"{description} {reason}"
 
 
-def template_annotation() -> str:
-    description = ""
+def nested_loop_annotation() -> str:
+    description = "nested loop is implemented here"
     reason = f""
 
     return f"{description} {reason}"
 
+
+def limit_annotation() -> str:
+    description = "limit is implemented here"
+    reason = f""
+
+    return f"{description} {reason}"
+
+
+def undefined_annotation() -> str:
+    description = "undefined Node found"
+    reason = f""
+
+    return f"{description} {reason}"
