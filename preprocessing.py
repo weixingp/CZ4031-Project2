@@ -1,5 +1,6 @@
 import psycopg2
 
+from annotation import extra_annotation
 from config import db_user, db_host, db_password, db_port, db_name
 from node import PlanNode
 
@@ -24,7 +25,16 @@ class QueryPlanner:
         self.cursor = self.conn.cursor()
 
         self.qep: PlanNode = None  # The root node to the qep tree
-        self.aqp = []  # Stores list of root nodes to aqp trees
+
+        # AQP Stores alternative plans in dictionary
+        # Dict format: {"Operation turned off": root node of the plan}
+        # Eg: {"Hash Join": root} retrieves a plan without using Hash Join
+        self.aqp = {}
+        self.alt_plan_names = []  # Store keys to the plans
+
+        # Extra annotations available for some operations
+        # Compare performance between QEP and AQPs
+        self.extra_annotation = {}
 
     def generate_plans(self, sql_query: str) -> None:
         """
@@ -33,8 +43,21 @@ class QueryPlanner:
         :param sql_query: The SQL query
         :return: None
         """
+        # Reset variables
+        self.qep = None
+        self.aqp = {}
+        self.alt_plan_names = []
+        self.extra_annotation = {}
+
+        # Generate plans
         self.__generate_qep(sql_query)
         self.__generate_aqps(sql_query)
+
+    def __get_sql_query_plan(self, sql_query: str):
+        self.cursor.execute(sql_query)
+        self.conn.commit()
+        plan = self.cursor.fetchall()
+        return plan[0][0][0]["Plan"]
 
     def __generate_qep(self, sql_query: str):
         """
@@ -42,40 +65,63 @@ class QueryPlanner:
         :param sql_query: The SQL query
         :return: None
         """
-        constraints = self.__prepare_constraints_query()
-        self.cursor.execute(f'{constraints} SET max_parallel_workers_per_gather = 0; EXPLAIN (VERBOSE, FORMAT JSON) ' + sql_query)
-        self.conn.commit()
-        plan = self.cursor.fetchall()
-        # print(plan)
-        self.qep = self.__build_tree_from_raw_plan(plan[0][0][0]["Plan"])
+        constraints = self.__prepare_constraints_query([])
+        q = f'{constraints} SET max_parallel_workers_per_gather = 0; EXPLAIN (VERBOSE, FORMAT JSON) ' + sql_query
+        plan = self.__get_sql_query_plan(q)
+        self.qep = self.__build_tree_from_raw_plan(plan)
 
     def __generate_aqps(self, sql_query: str):
-        constraints = self.__prepare_constraints_query(hash_join=False)
-        self.cursor.execute(f'{constraints} SET max_parallel_workers_per_gather = 0; EXPLAIN (VERBOSE, FORMAT JSON) ' + sql_query)
-        self.conn.commit()
-        plan = self.cursor.fetchall()
-        print(plan)
-        self.aqp.append(self.__build_tree_from_raw_plan(plan[0][0][0]["Plan"]))
+        """
+        Generate AQPs by limiting 1 constraint at a time
+        :param sql_query: The SQL query
+        :return: None
+        """
+        assert self.qep, "QEP has to be generated first"
+
+        join_types = ["Hash Join", "Nested Loop", "Merge Join"]
+        scan_types = ["Seq Scan", "Bitmap Heap Scan", "Index Scan"]
+        unique_types = PlanNode.get_unique_node_types(self.qep)
+
+        # Generate AQP by limiting 1 operation type per plan
+        for t in join_types + scan_types:
+            if t in unique_types:
+                constraints = self.__prepare_constraints_query([t])
+                q = f'{constraints} SET max_parallel_workers_per_gather = 0; EXPLAIN (VERBOSE, FORMAT JSON) ' + sql_query
+                plan = self.__get_sql_query_plan(q)
+                root = self.__build_tree_from_raw_plan(plan)
+                self.alt_plan_names.append(t)
+
+                if t in join_types:
+                    other_ops = [x for x in join_types if x != t]
+                else:
+                    other_ops = [x for x in scan_types if x != t]
+                annotation = extra_annotation(op=t, other_ops=other_ops, reduction=root.cost/self.qep.cost)
+                self.extra_annotation[t] = annotation
+                self.aqp[t] = root
 
     @staticmethod
-    def __prepare_constraints_query(
-            hash_join=True,
-            index_scan=True,
-            merge_join=True,
-            nest_loop=True,
-            seq_scan=True,
-            bitmap_scan=True
-    ) -> str:
+    def __prepare_constraints_query(off_list: list) -> str:
         """
         Generate the Planner Method Configuration query
-        :return:
+        :param off_list: List of operations to turn off
+        :return: sql statements
         """
-        q = f"Set enable_hashjoin to {hash_join};" \
-            f"Set enable_indexscan to {index_scan};" \
-            f"Set enable_mergejoin to {merge_join};" \
-            f"Set enable_nestloop to {nest_loop};" \
-            f"Set enable_seqscan to {seq_scan};" \
-            f"Set enable_bitmapscan to {bitmap_scan};"
+        q = ""
+
+        ops = {
+            "Hash Join": "enable_hashjoin",
+            "Index Scan": "enable_indexscan",
+            "Merge Join": "enable_mergejoin",
+            "Nest Loop": "enable_nestloop",
+            "Seq Scan": "enable_seqscan",
+            "Bitmap Heap Scan": "enable_bitmapscan"
+        }
+
+        for key, value in ops.items():
+            if key in off_list:
+                q += f"Set {value} to off;"
+            else:
+                q += f"Set {value} to on;"
 
         return q
 
@@ -112,7 +158,6 @@ class QueryPlanner:
         :param root: Root of the plan
         :return: None
         """
-        print("")
         def printTree(node, nodeInfo, indent=""):
             label, children = nodeInfo(node)
             print(indent[:-3] + "|_ " * bool(indent) + str(label))
@@ -156,4 +201,9 @@ if __name__ == '__main__':
     qp = QueryPlanner()
     qp.generate_plans(sql)
     qp.print_plan_tree(qp.qep)
-    qp.print_plan_tree(qp.aqp[0])
+
+    for name in qp.alt_plan_names:
+        print("")
+        print("Extra annotation:", qp.extra_annotation[name])
+        print("Printing tree while applying constraint on", name)
+        qp.print_plan_tree(qp.aqp[name])

@@ -71,6 +71,22 @@ class PlanNode:
         else:
             return UndefinedNode(cost=cost, type_name=plan["Node Type"])
 
+    @classmethod
+    def get_unique_node_types(cls, root: "PlanNode") -> list:
+        """
+        Get a list of unique node types used in a plan tree
+        :param root: The root node
+        :return: list of node types
+        """
+        lst = set()
+
+        def dfs(n: "PlanNode"):
+            lst.add(n.type)
+            for item in n.children:
+                dfs(item)
+        dfs(root)
+        return list(lst)
+
 
 class SortNode(PlanNode):
     type = "Sort"
