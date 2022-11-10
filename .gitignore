@@ -160,3 +160,12 @@ cython_debug/
 #.idea/
 
 /config.py
+/.idea/dataSources.xml
+/.idea/.gitignore
+/.idea/CZ4031-Project2.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/sqldialects.xml
+/.idea/vcs.xml
