@@ -4,11 +4,13 @@ supported_node_types = [
     "Sort",
     "Seq Scan",
     "Index Scan",
+    "Bitmap Heap Scan",
     "Hash Join",
+    "Merge Join",
     "Aggregate",
     "Hash",
     "Nested Loop",
-    "Limit"
+    "Limit",
 ]
 
 
@@ -39,19 +41,25 @@ class PlanNode:
         if node_type == "Sort":
             return SortNode(cost=cost, sort_keys=plan["Sort Key"])
         elif node_type == "Seq Scan":
-            return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=plan["Filter"])
+            if "Filter" in plan:
+                f = plan["Filter"]
+            else:
+                f = "()"
+            return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=f)
         elif node_type == "Index Scan":
-
             if "Index Cond" in plan:
                 cond = plan["Index Cond"]
             elif "Filter" in plan:
                 cond = plan["Filter"]
             else:
                 cond = ""
-
             return IndexScanNode(cost=cost, table_name=plan["Relation Name"], cond=cond)
+        elif node_type == "Bitmap Heap Scan":
+            return BitMapHeapScanNode(cost=cost, table_name=plan["Relation Name"])
         elif node_type == "Hash Join":
             return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
+        elif node_type == "Merge Join":
+            return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
             return AggregateNode(cost=cost, group_keys=plan["Group Key"])
         elif node_type == "Hash":
@@ -62,6 +70,22 @@ class PlanNode:
             return LimitNode(cost=cost)
         else:
             return UndefinedNode(cost=cost, type_name=plan["Node Type"])
+
+    @classmethod
+    def get_unique_node_types(cls, root: "PlanNode") -> list:
+        """
+        Get a list of unique node types used in a plan tree
+        :param root: The root node
+        :return: list of node types
+        """
+        lst = set()
+
+        def dfs(n: "PlanNode"):
+            lst.add(n.type)
+            for item in n.children:
+                dfs(item)
+        dfs(root)
+        return list(lst)
 
 
 class SortNode(PlanNode):
@@ -120,12 +144,46 @@ class IndexScanNode(PlanNode):
         return text
 
 
+class BitMapHeapScanNode(PlanNode):
+    type = "Bitmap Heap Scan"
+
+    def __init__(self, cost: float, table_name: str):
+        """
+        Index Scan scan node
+        :param cost: Total cost
+        :param table_name: The table name the scan is run on
+        """
+        super().__init__(cost)
+        self.table_name = table_name
+
+    def get_annotations(self) -> str:
+        text = ""
+        return text
+
+
 class HashJoinNode(PlanNode):
     type = "Hash Join"
 
     def __init__(self, cost: float, cond: str):
         """
-        Hash Join scan node
+        Hash Join node
+        :param cost: Total cost
+        :param cond: The condition of the join is run on
+        """
+        super().__init__(cost)
+        self.cond = cond
+
+    def get_annotations(self) -> str:
+        text = ""
+        return text
+
+
+class MergeJoinNode(PlanNode):
+    type = "Merge Join"
+
+    def __init__(self, cost: float, cond: str):
+        """
+        Merge Join node
         :param cost: Total cost
         :param cond: The condition of the join is run on
         """

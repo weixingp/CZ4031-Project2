@@ -1,3 +1,10 @@
+def extra_annotation(op: str, other_ops: list, reduction: float) -> str:
+    text = f"{op} is faster than using {', '.join(other_ops)} here, " \
+           f"and achieved a cost reduction by at least {'{:.1f}'.format(reduction)}x"
+
+    return text
+    
+    
 def template_annotation() -> str:
     description = ""
     reason = f""
@@ -17,6 +24,7 @@ def seq_scan_annotation(table_name: str, q_filter: str) -> str:
     reason = f"Sequential scan on {table_name} is faster due to low selectivity of predicate {q_filter}."
 
     return f"{description} {reason}"
+
 
 
 def index_scan_annotation(table_name: str, cond: str) -> str:
@@ -57,8 +65,4 @@ def template_annotation() -> str:
     reason = f""
 
     return f"{description} {reason}"
-
-
-
-
 
