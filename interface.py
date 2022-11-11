@@ -56,7 +56,12 @@ def draw_tree(tree: PlanNode, frame, no_annotation=False):
     frame_top.pack(ipadx=5, fill=X)
     frame_bottom = Frame(frame, bg="white")
     frame_bottom.pack(fill=X)
-    label = Label(frame_top, text=tree.type, fg="black", bg="white", relief=SOLID, borderwidth=1, width=10)
+
+    if len(tree.type) > 12:
+        width = 13
+    else:
+        width = 10
+    label = Label(frame_top, text=tree.type, fg="black", bg="white", relief=SOLID, borderwidth=1, width=width)
     label.pack()
 
     # Process tooltip content
@@ -168,16 +173,6 @@ def insert_sql(index):
     # textinput.delete(0, END)
     textinput.delete("0.0", END)
     textinput.insert("0.0", sql_list[index])
-
-
-def delete_canvas(canvas):
-    canvas.destroy()
-
-
-def replace_canvas(canvas, scrollable_frame, plan_root, no_annotation):
-    canvas.destroy()
-
-    pass
 
 
 def outputpage(root, plan_root: PlanNode, no_annotation=False):

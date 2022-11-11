@@ -52,13 +52,18 @@ class PlanNode:
         cost = plan["Total Cost"]
 
         if node_type == "Sort":
-            return SortNode(cost=cost, sort_keys=plan["Sort Key"])
+
+            return SortNode(cost=cost, sort_keys=plan.get("Sort Key", "None"))
         elif node_type == "Seq Scan":
             if "Filter" in plan:
                 f = plan["Filter"]
             else:
                 f = "()"
-            return SeqScanNode(cost=cost, table_name=plan["Relation Name"], q_filter=f)
+            return SeqScanNode(
+                cost=cost,
+                table_name=plan.get("Relation Name", "None"),
+                q_filter=f
+            )
         elif node_type == "Index Scan":
             if "Index Cond" in plan:
                 cond = plan["Index Cond"]
@@ -66,15 +71,15 @@ class PlanNode:
                 cond = plan["Filter"]
             else:
                 cond = ""
-            return IndexScanNode(cost=cost, table_name=plan["Relation Name"], cond=cond)
+            return IndexScanNode(
+                cost=cost,
+                table_name=plan.get("Relation Name", "None"),
+                cond=cond
+            )
         elif node_type == "Bitmap Heap Scan":
-            return BitMapHeapScanNode(cost=cost, table_name=plan["Relation Name"])
+            return BitMapHeapScanNode(cost=cost, table_name=plan.get("Relation Name", "None"))
         elif node_type == "Hash Join":
-            if "Filter" in plan:
-                f = plan["Filter"]
-            else:
-                f = "()"
-            return HashJoinNode(cost=cost, cond=plan["Hash Cond"], q_filter=f)
+            return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
         elif node_type == "Merge Join":
             return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
@@ -288,5 +293,4 @@ class UndefinedNode(PlanNode):
         self.type = type_name
 
     def get_annotations(self) -> str:
-        text = undefined_annotation()
-        return text
+        return ""
