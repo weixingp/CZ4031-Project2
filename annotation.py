@@ -26,7 +26,9 @@ def seq_scan_annotation(table_name: str, q_filter: str) -> str:
 def bit_map_heap_scan_annotation(table_name: str) -> str:
 
     description = "Tables are read using Bitmap heap scan."
-    reason = f"Bitmap heap scan on {table_name} is faster here."
+    reason = f"Bitmap heap scan on {table_name} is faster here. Use of a bitmap scan" \
+             f"allows the optimizer to generate a plan that can take advantage" \
+             f"of multiple indexes to match up different portions of the query"
     return f"{description} {reason}"
 
 
