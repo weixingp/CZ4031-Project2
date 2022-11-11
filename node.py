@@ -58,7 +58,11 @@ class PlanNode:
         elif node_type == "Bitmap Heap Scan":
             return BitMapHeapScanNode(cost=cost, table_name=plan["Relation Name"])
         elif node_type == "Hash Join":
-            return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
+            if "Filter" in plan:
+                f = plan["Filter"]
+            else:
+                f = "()"
+            return HashJoinNode(cost=cost, cond=plan["Hash Cond"], q_filter=f)
         elif node_type == "Merge Join":
             return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
