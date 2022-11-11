@@ -1,6 +1,5 @@
 from annotation import *
 
-
 supported_node_types = [
     "Sort",
     "Seq Scan",
@@ -28,6 +27,19 @@ class PlanNode:
 
     def get_annotations(self):
         raise NotImplementedError
+
+    def get_formatted_annotations(self):
+        """
+        Post process annotation
+        """
+        n = 12
+        s = self.get_annotations()
+        a = s.split()
+        ret = ''
+        for i in range(0, len(a), n):
+            ret += ' '.join(a[i:i + n]) + '\n'
+
+        return ret
 
     @classmethod
     def create_node(cls, plan: dict) -> "PlanNode":
@@ -62,7 +74,8 @@ class PlanNode:
         elif node_type == "Merge Join":
             return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
-            return AggregateNode(cost=cost, group_keys=plan["Group Key"])
+            group_key = plan["Group Key"] if "Group Key" in plan else "None"
+            return AggregateNode(cost=cost, group_keys=group_key)
         elif node_type == "Hash":
             return HashNode(cost=cost)
         elif node_type == "Nested Loop":
@@ -85,6 +98,7 @@ class PlanNode:
             lst.add(n.type)
             for item in n.children:
                 dfs(item)
+
         dfs(root)
         return list(lst)
 
@@ -141,7 +155,7 @@ class IndexScanNode(PlanNode):
         self.cond = cond
 
     def get_annotations(self) -> str:
-        text = index_scan_annotation(self.table_name,self.cond)
+        text = index_scan_annotation(self.table_name, self.cond)
         return text
 
 
@@ -165,7 +179,7 @@ class BitMapHeapScanNode(PlanNode):
 class HashJoinNode(PlanNode):
     type = "Hash Join"
 
-    def __init__(self, cost: float, cond: str, q_filter: str):
+    def __init__(self, cost: float, cond: str):
         """
         Hash Join node
         :param cost: Total cost
@@ -173,9 +187,9 @@ class HashJoinNode(PlanNode):
         """
         super().__init__(cost)
         self.cond = cond
-        self.q_filter = q_filter
+
     def get_annotations(self) -> str:
-        text = hash_join_annotation(self.cond,self.q_filter)
+        text = hash_join_annotation(self.cond)
         return text
 
 

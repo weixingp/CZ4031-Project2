@@ -1,7 +1,6 @@
 import psycopg2
 
 from annotation import extra_annotation
-from config import db_user, db_host, db_password, db_port, db_name
 from node import PlanNode
 
 
@@ -10,7 +9,7 @@ class QueryPlanner:
     Query planner class
     """
 
-    def __init__(self):
+    def __init__(self, db_host, db_port, db_name, db_user, db_password):
         """
         Init Query Planner
         Throws psycopg2.OperationalError if the connection to the db fails
@@ -54,10 +53,14 @@ class QueryPlanner:
         self.__generate_aqps(sql_query)
 
     def __get_sql_query_plan(self, sql_query: str):
-        self.cursor.execute(sql_query)
-        self.conn.commit()
-        plan = self.cursor.fetchall()
-        return plan[0][0][0]["Plan"]
+        try:
+            self.cursor.execute(sql_query)
+            self.conn.commit()
+            plan = self.cursor.fetchall()
+            return plan[0][0][0]["Plan"]
+        except Exception as ex:
+            self.conn.rollback()
+            raise Exception(ex)
 
     def __generate_qep(self, sql_query: str):
         """
@@ -167,43 +170,3 @@ class QueryPlanner:
 
         print("Plan cost: ", root.cost)
         printTree(root, lambda n: (n.type, n.children))
-
-
-if __name__ == '__main__':
-    """
-    Sample usage
-    """
-
-    sql = '''
-
-    select l_orderkey, sum( l_extendedprice *( 1-l_discount )) as revenue,
-    o_orderdate,
-    o_shippriority
-    from
-        customer,
-        orders,
-        lineitem
-    where
-        c_mktsegment = 'HOUSEHOLD'
-        and c_custkey = o_custkey
-        and l_orderkey = o_orderkey
-        and o_orderdate < date '1995-03-21' and l_shipdate > date '1955-03-21'
-    group by
-        l_orderkey,
-        o_orderdate,
-        o_shippriority
-    order by
-        revenue DESC,
-        o_orderdate
-        limit 10;
-    '''
-
-    qp = QueryPlanner()
-    qp.generate_plans(sql)
-    qp.print_plan_tree(qp.qep)
-
-    for name in qp.alt_plan_names:
-        print("")
-        print("Extra annotation:", qp.extra_annotation[name])
-        print("Printing tree while applying constraint on", name)
-        qp.print_plan_tree(qp.aqp[name])
