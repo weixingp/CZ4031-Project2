@@ -165,7 +165,7 @@ class BitMapHeapScanNode(PlanNode):
 class HashJoinNode(PlanNode):
     type = "Hash Join"
 
-    def __init__(self, cost: float, cond: str):
+    def __init__(self, cost: float, cond: str, q_filter: str):
         """
         Hash Join node
         :param cost: Total cost
@@ -173,9 +173,9 @@ class HashJoinNode(PlanNode):
         """
         super().__init__(cost)
         self.cond = cond
-
+        self.q_filter = q_filter
     def get_annotations(self) -> str:
-        text = hash_join_annotation(self.cond)
+        text = hash_join_annotation(self.cond,self.q_filter)
         return text
 
 
