@@ -97,7 +97,6 @@ def mainpage(root):
     title = Label(root, text="SQL Query Annotator", height=1, width=25, bg="#3B86A7", fg="white", font="Inter 48")
     title.place(anchor=CENTER, relx=0.5, rely=0.12)
 
-
     subtitle = Label(root, text="Enter Query Here:", bg="white", fg="black", font="Inter 18 bold")
     subtitle.place(x=80,y=120)
 
@@ -115,12 +114,34 @@ def outputpage(root):
     home_button = Button(root, text = "Back", width=5, height=1, bg="#3B86A7", fg="white", font="Inter 16", command=change)
     home_button.place(x=25,y=35)
 
-    frame_tree = Frame(root, bg="white")
-    frame_tree.place(x=100, y=100)
+    frame_output = Frame(root, bg="white", height=400, width=850, padx=0, pady=0)
+    frame_output.place(x=0, y=100)
 
-    #TODO modify code to get actual tree
-    tree = ["a", ["b", ["c", ["f", ["h", ["i", [""], [""]], ["j", ["m", [""], [""]], ["n", [""], [""]]]], [""]], ["g", [""], [""]]], ["d", ["e", ["k", [""], [""]], ["l", [""], [""]]], [""]]], [""]]
-    drawTree(tree, frame_tree)
+    canvas = Canvas(frame_output, bg="white", height=380, width=830)
+    vsb = Scrollbar(frame_output, orient="vertical", command=canvas.yview)
+    hsb = Scrollbar(frame_output, orient="horizontal", command=canvas.xview)
+    canvas.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+    canvas.grid(row=0, column=0, sticky="nsew")
+    vsb.grid(row=0, column=1, sticky="ns")
+    hsb.grid(row=1, column=0, sticky="ew")
+
+    scrollable_frame = Frame(canvas, bg="white")
+    scrollable_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(
+            scrollregion=canvas.bbox("all")
+        )
+    )
+
+    canvas.create_window((415, 190), window=scrollable_frame, anchor="center")
+
+    # TODO modify code to get actual tree
+    tree = ["a", ["b", ["c",
+                        ["f", ["h", ["i", [""], [""]], ["j", ["m", [""], [""]], ["n", [""], [""]]]], [""]],
+                        ["g", [""], [""]]], ["d", ["e", ["k", [""], [""]], ["l", [""], [""]]], [""]]], [""]]
+    Label(scrollable_frame, text="", bg="white").pack()
+    drawTree(tree, scrollable_frame)
+    Label(scrollable_frame, text="", bg="white").pack()
 
 def pagechange():
     global page_num, root
