@@ -37,17 +37,20 @@ def index_scan_annotation(table_name: str, cond: str) -> str:
     return f"{description} {reason}"
 
 
-def hash_join_annotation(cond: str) -> str:
+def hash_join_annotation(cond: str, q_filter: str) -> str:
 
-    description = "Hash Join is used."
-    reason = f"hash join is implemented because of {cond}."
+    description = "Hash Join is used on {cond}."
+    reason = f"Hash join is efficient for processing large, " \
+             f"unsorted and non-indexed inputs compared to other join types.In this query," \
+             f" it has better performance when doing equality join where hash condition is {q_filter}"
     return f"{description} {reason}"
 
 
-def merge_join_annotation(cond: str) -> str:
+def merge_join_annotation() -> str:
 
     description = "Merge Join is used."
-    reason = f"merge join is implemented because of {cond}."
+    reason = f"merge join is implemented as it the involved relations " \
+             f"are both too big for a hash that fits"
     return f"{description} {reason}"
 
 
@@ -65,8 +68,10 @@ def hash_annotation() -> str:
 
 
 def nested_loop_annotation() -> str:
-    description = "nested loop is implemented"
-    return f"{description} "
+    description = "nested loop is implemented "
+    reason = "Nested loop joins are ideal when one join is smaller and" \
+             " the other join input is large and indexed on its join columns"
+    return f"{description} {reason}"
 
 
 def limit_annotation() -> str:
