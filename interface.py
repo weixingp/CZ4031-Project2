@@ -229,7 +229,7 @@ def refreshOutputpage(root, plan_root: PlanNode, no_annotation=False):
 
 def alt_plans_btns():
     org_btn = Button(root, text=f"Original Plan", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 14",
-                     command=partial(refreshOutputpage, root, qp.qep, True))
+                     command=partial(refreshOutputpage, root, qp.qep, False))
     org_btn.place(x=700, y=505)
     keep = []
     i = 0
