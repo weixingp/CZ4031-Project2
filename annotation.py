@@ -59,7 +59,7 @@ def merge_join_annotation(cond: str) -> str:
 def aggregate_annotation(group_keys:list) -> str:
 
     description = "Aggregation is performed here."
-    reason = f"Aggregation is performed on {group_keys}."
+    reason = f"Aggregation is performed on {group_keys}.It computes a single result from multiple input rows."
     return f"{description} {reason}"
 
 
