@@ -23,6 +23,7 @@ class PlanNode:
     def __init__(self, cost: float, row: int):
         self.cost = cost
         self.rows = row
+        self.is_diff = False  # If this node is diff from another plan
         self.children: ["PlanNode"] = []
 
     def get_annotations(self):
@@ -108,6 +109,64 @@ class PlanNode:
 
         dfs(root)
         return list(lst)
+
+    @classmethod
+    def compare_trees(cls, org: "PlanNode", alt: "PlanNode"):
+        """
+        Compare 2 trees, mark a node if it's different from the first
+        """
+        def dfs_mark(node):
+            """
+            Mark all child as diff
+            """
+            node.is_diff = True
+            for n in node.children:
+                dfs_mark(n)
+
+        def dfs_compare(node1, node2):
+            """
+            Compare two trees recursively
+            """
+            if not node1 and node2:
+                # node 2 must be all diff below
+                dfs_mark(node2)
+
+            if node1 and not node2:
+                # nth to compare
+                return
+
+            if not node1 and not node2:
+                # nth to compare
+                return
+
+            if node1.type != node2.type:
+                # Diff
+                dfs_mark(node2)
+            else:
+                if len(node1.children) == 2:
+                    left1 = node1.children[0]
+                    left2 = node1.children[1]
+                elif len(node1.children) == 1:
+                    left1 = node1.children[0]
+                    left2 = None
+                else:
+                    left1 = None
+                    left2 = None
+
+                if len(node2.children) == 2:
+                    right1 = node2.children[0]
+                    right2 = node2.children[1]
+                elif len(node2.children) == 1:
+                    right1 = node2.children[0]
+                    right2 = None
+                else:
+                    right1 = None
+                    right2 = None
+
+                dfs_compare(left1, right1)
+                dfs_compare(left2, right2)
+
+        dfs_compare(org, alt)
 
 
 class SortNode(PlanNode):
