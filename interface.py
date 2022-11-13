@@ -16,7 +16,10 @@ class ToolTip(object):
         self.x = self.y = 0
 
     def showtip(self, text):
-        "Display text in tooltip window"
+        """
+        Display text in tooltip window
+        :param text: the text to be displayed
+        """
         self.text = text
         if self.tipwindow or not self.text:
             return
@@ -38,25 +41,37 @@ class ToolTip(object):
             tw.destroy()
 
 
-def CreateToolTip(widget, text):
-    toolTip = ToolTip(widget)
+def create_tooltip(widget, text):
+    """
+    creates a ToolTip object for the widget
+    :param widget: the widget to display a ToolTip
+    :param text: the text to be displayed
+    """
+    tool_tip = ToolTip(widget)
 
     def enter(event):
-        toolTip.showtip(text)
+        tool_tip.showtip(text)
 
     def leave(event):
-        toolTip.hidetip()
+        tool_tip.hidetip()
 
     widget.bind('<Enter>', enter)
     widget.bind('<Leave>', leave)
 
 
 def draw_tree(tree: PlanNode, frame, no_annotation=False):
+    """
+    draws the query execution plan in a binary tree form
+    :param tree: the root plan node to access the query execution plan
+    :param frame: the frame to display the tree in
+    :param no_annotation: boolean to display annotations for QEP but not AQP
+    """
     frame_top = Frame(frame, bg="white")
     frame_top.pack(ipadx=5, fill=X)
     frame_bottom = Frame(frame, bg="white")
     frame_bottom.pack(fill=X)
 
+    # Displays the current node
     if len(tree.type) > 12:
         width = 13
     else:
@@ -79,12 +94,12 @@ def draw_tree(tree: PlanNode, frame, no_annotation=False):
                                                                                  last_space_before + 1:]
             tooltip_text += f"\n{extra_annotation}"
 
-    CreateToolTip(
+    create_tooltip(
         label,
         text=tooltip_text
     )
-    # left = tree[1] != [""]
-    # right = tree[2] != [""]
+
+    # Displays the child nodes
     if len(tree.children) > 0:
         Label(frame_top, text="|", bg="white").pack()
         frame_arrow = Frame(frame_top, bg="white")
@@ -114,13 +129,16 @@ def draw_tree(tree: PlanNode, frame, no_annotation=False):
             draw_tree(tree.children[0], frame_left, no_annotation)
 
 
-def getinput():
+def get_input():
+    """
+    gets the query execution plan from the query in the text input
+    """
     global qp, query
     annotate_submit_btn.config(text="Generating...")
     query = textinput.get("1.0", END)
     try:
         qp.generate_plans(query)
-        pagechange()
+        page_change()
     except Exception as ex:
         messagebox.showerror("SQL Error", ex)
         annotate_submit_btn.config(text="Annotate")
@@ -128,89 +146,102 @@ def getinput():
 
 # using this to change pages first
 def change():
-    pagechange()
+    page_change()
 
 
-def mainpage(root):
+def main_page(win):
+    """
+    displays the UI for the input page to input the sql query
+    :param win: the main window to display the input page
+    """
     global textinput, annotate_submit_btn
-    frame_main_title = Frame(root, bg='#3B86A7', height=60)
+
+    # Display title
+    frame_main_title = Frame(win, bg='#3B86A7', height=60)
     frame_main_title.pack(fill='x')
     title = Label(frame_main_title, text="SQL Query Annotator", height=2, bg="#3B86A7", fg="white", font="Inter 48")
     title.pack(fill='both')
 
-    frame_main_bottom = Frame(root, bg='white', padx=10, pady=10, width=850, height=490)
+    # Display content
+    frame_main_bottom = Frame(win, bg='white', padx=10, pady=10, width=850, height=490)
     frame_main_bottom.pack(fill='x')
     frame_main_bottom.rowconfigure(0, weight=1)
     frame_main_bottom.columnconfigure(0, weight=3)
     frame_main_bottom.columnconfigure(1, weight=1)
 
+    # Text input box to input sql query
     frame_main_left = Frame(frame_main_bottom, bg='white', padx=10, pady=10)
     frame_main_left.grid(row=0, column=0, sticky='nsew')
 
-    frame_main_right = Frame(frame_main_bottom, bg='white', padx=10, pady=10)
-    frame_main_right.grid(row=0, column=1, sticky='nsew')
-
-    subtitle = Label(frame_main_left, text="Enter Query Here:", bg="white", fg="black", font="Inter 18 bold", anchor='w')
+    subtitle = Label(frame_main_left, text="Enter Query Here:", bg="white", fg="black", font="Inter 18 bold",
+                     anchor='w')
     subtitle.pack(fill='x')
     textinput = Text(frame_main_left, width=60, height=20, bg="#CCE4EB")
     textinput.pack(fill='both')
     Label(frame_main_left, text=" ", bg="white").pack()
     annotate_submit_btn = Button(frame_main_left, text="Annotate", width=10, height=1, bg="#3B86A7",
-                                 fg="black", font="Inter 16", command=getinput)
+                                 fg="black", font="Inter 16", command=get_input)
     annotate_submit_btn.pack()
 
-    # Example SQL input
+    # Buttons to use example SQL input
+    frame_main_right = Frame(frame_main_bottom, bg='white', padx=10, pady=10)
+    frame_main_right.grid(row=0, column=1, sticky='nsew')
 
     subtitle2 = Label(frame_main_right, text="Example SQLs:", bg="white", fg="black", font="Inter 18 bold")
     subtitle2.pack()
-    Label(frame_main_right, text=" ", bg="white").pack()
-
+    Label(frame_main_right, text=" ", bg="white").pack()  # padding
     Button(frame_main_right, text=f"SQL Query 1", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 16",
-                      command=lambda: insert_sql(0)).pack()
-    Label(frame_main_right, text=" ", bg="white").pack()
-
+           command=lambda: insert_sql(0)).pack()
+    Label(frame_main_right, text=" ", bg="white").pack()  # padding
     Button(frame_main_right, text=f"SQL Query 2", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 16",
-                      command=lambda: insert_sql(1)).pack()
-    Label(frame_main_right, text=" ", bg="white").pack()
-
+           command=lambda: insert_sql(1)).pack()
+    Label(frame_main_right, text=" ", bg="white").pack()  # padding
     Button(frame_main_right, text=f"SQL Query 3", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 16",
-                      command=lambda: insert_sql(2)).pack()
-    Label(frame_main_right, text=" ", bg="white").pack()
-
+           command=lambda: insert_sql(2)).pack()
+    Label(frame_main_right, text=" ", bg="white").pack()  # padding
     Button(frame_main_right, text=f"SQL Query 4", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 16",
-                      command=lambda: insert_sql(3)).pack()
+           command=lambda: insert_sql(3)).pack()
 
 
 def insert_sql(index):
+    """
+    inserts sample sql query into the input box
+    :param index: the index of the
+    """
     assert 4 > index >= 0, "SQL index out of range"
-    # textinput.delete(0, END)
     textinput.delete("0.0", END)
     textinput.insert("0.0", sql_list[index])
 
 
-def outputpage(root, plan_root: PlanNode, no_annotation=False):
-    frame_output_title = Frame(root, bg='#3B86A7', height=60, padx=40)
+def output_page(win, plan_root: PlanNode, no_annotation=False):
+    """
+    displays the UI for the annotations of query execution plan
+    :param win: the main window to display the annotations of query execution plan
+    :param plan_root: the root plan node to access the query execution plan
+    :param no_annotation: boolean to display annotations for QEP but not AQP
+    """
+
+    # Display title
+    frame_output_title = Frame(win, bg='#3B86A7', height=60, padx=40)
     frame_output_title.pack(fill='x')
     home_button = Button(frame_output_title, text="Back", width=5, height=1, bg="#3B86A7", fg="black", font="Inter 16",
                          command=change)
     home_button.pack(side=LEFT)
-
     title = Label(frame_output_title, text="Query Annotation", height=2, bg="#3B86A7", fg="white", font="Inter 48")
     title.pack(side=LEFT, fill='x', expand=1)
     Label(frame_output_title, text="Back", width=5, height=1, bg="#3B86A7", fg="#3B86A7",
           font="Inter 16").pack(side=LEFT)  # padding
 
-    frame_output_content = Frame(root, bg="white", height=490, width=850, padx=0, pady=0)
+    # Display content
+    frame_output_content = Frame(win, bg="white", height=490, width=850, padx=0, pady=0)
     frame_output_content.pack(fill='x')
     frame_output_content.rowconfigure(0, weight=1)
     frame_output_content.columnconfigure(0, weight=3)
     frame_output_content.columnconfigure(1, weight=1)
 
+    # Display annotation frame
     frame_output = Frame(frame_output_content, bg="white", height=320, width=850, padx=0, pady=0)
     frame_output.pack(fill='x')
-
-    frame_output_bottom = Frame(frame_output_content, bg="white", height=170, width=850, padx=0, pady=0)
-    frame_output_bottom.pack(fill='x')
 
     canvas = Canvas(frame_output, bg="white", height=320, width=830)
     vsb = Scrollbar(frame_output, orient="vertical", command=canvas.yview)
@@ -230,14 +261,16 @@ def outputpage(root, plan_root: PlanNode, no_annotation=False):
     Label(scrollable_frame, text="", bg="white").pack()
     canvas.create_window((415, 250), window=scrollable_frame, anchor="n")
     draw_tree(plan_root, scrollable_frame, no_annotation)
+    Label(scrollable_frame, text="", bg="white").pack()
 
-    plan_cost_title = Label(frame_output_content, text=f"Plan cost: {plan_root.cost}", bg="white", fg="black",
+    plan_cost_title = Label(frame_output, text=f"Plan cost: {plan_root.cost}", bg="white", fg="black",
                             font="Inter 18 bold")
     plan_cost_title.place(x=20, y=20)
 
-    Label(scrollable_frame, text="", bg="white").pack()
+    # Display bottom frame
+    frame_output_bottom = Frame(frame_output_content, bg="white", height=170, width=850, padx=0, pady=0)
+    frame_output_bottom.pack(fill='x')
 
-    # bottom page
     original_query_box = Text(frame_output_bottom, width=60, height=10, bg="#CCE4EB")
     original_query_box.pack(side=LEFT)
     original_query_box.insert("1.0", query)
@@ -248,31 +281,45 @@ def outputpage(root, plan_root: PlanNode, no_annotation=False):
     frame_output_bottom_qep = Frame(frame_output_bottom, bg="white")
     frame_output_bottom_qep.pack(side=LEFT, fill='both', expand=1)
 
-    plan_cost_title = Label(frame_output_bottom_aqp, text=f"Alt Plans:", bg="white", fg="black", font="Inter 16",
-                            anchor='w')
-    plan_cost_title.pack()
-    alt_plans_btns(frame_output_bottom_aqp, frame_output_bottom_qep)
+    alt_plan_label = Label(frame_output_bottom_aqp, text=f"Alt Plans:", bg="white", fg="black", font="Inter 16",
+                           anchor='w')
+    alt_plan_label.pack()
+    alt_plans_buttons(frame_output_bottom_aqp, frame_output_bottom_qep)
 
 
-
-def refreshOutputpage(root, plan_root: PlanNode, no_annotation=False):
-    for widget in root.winfo_children():
+def refresh_output_page(win, plan_root: PlanNode, no_annotation=False):
+    """
+    switches UI to display the alternate plan
+    :param win: the main window to display the annotations of query execution plan
+    :param plan_root: the root plan node to access the alternate plan
+    :param no_annotation: boolean to display annotations for QEP but not AQP
+    """
+    for widget in win.winfo_children():
         widget.destroy()
-    outputpage(root, plan_root, no_annotation)
+    output_page(win, plan_root, no_annotation)
 
 
-def alt_plans_btns(frame_aqp, frame_qep):
+def alt_plans_buttons(frame_aqp, frame_qep):
+    """
+    displays buttons to switch between different query plans
+    :param frame_aqp: the frame in which to display the alternate query plan buttons
+    :param frame_qep: the frame in which to display the query execution plan button
+    """
     org_btn = Button(frame_qep, text=f"Original Plan", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 14",
-                     command=partial(refreshOutputpage, root, qp.qep, False))
+                     command=partial(refresh_output_page, root, qp.qep, False))
     org_btn.place(relx=0.5, rely=0.5, anchor=CENTER)
     keep = []
     for key, node in qp.aqp.items():
         plan1_btn = Button(frame_aqp, text=f"No {key}", width=10, height=1, bg="#3B86A7", fg="black", font="Inter 14",
-                           command=partial(refreshOutputpage, root, node, True))
+                           command=partial(refresh_output_page, root, node, True))
         plan1_btn.pack()
         keep.append(plan1_btn)
 
+
 def connect_db_form():
+    """
+    displays the login form to connect to DB
+    """
     global top
     top = Toplevel(root)
     top.geometry("400x250")
@@ -280,7 +327,7 @@ def connect_db_form():
     def disable_event():
         pass
 
-    top.title("Connect to PostresSQL Database")
+    top.title("Connect to PostgresSQL Database")
     top.protocol("WM_DELETE_WINDOW", disable_event)
     top.protocol("WM_MINIMIZE_WINDOW", disable_event)
     # top.overrideredirect(True)
@@ -311,39 +358,45 @@ def connect_db_form():
 
         entry_list.append(entry)
 
-    submitbtn = Button(
+    submit_button = Button(
         top,
         text="Login",
         bg='blue',
         command=lambda: login_db([x.get() for x in entry_list])
     )
-    submitbtn.place(x=175, y=(len(fields) + 1) * y_padding, width=55)
+    submit_button.place(x=175, y=(len(fields) + 1) * y_padding, width=55)
 
 
 def login_db(credentials: list):
+    """
+    to attempt login to connect to DB
+    """
     global qp, is_logged_in
     try:
         qp = QueryPlanner(*credentials)
         is_logged_in = True
         top.destroy()
         top.update()
-        mainpage(root)
+        main_page(root)
     except Exception as ex:
         top.attributes('-topmost', 'false')
         messagebox.showerror("Unable to connect to DB", ex)
         top.attributes('-topmost', 'true')
 
 
-def pagechange():
+def page_change():
+    """
+    to switch between the input query page and output annotation page
+    """
     global page_num, root
     for widget in root.winfo_children():
         widget.destroy()
 
     if page_num == 1:
-        outputpage(root, qp.qep)
+        output_page(root, qp.qep)
         page_num = 2
     else:
-        mainpage(root)
+        main_page(root)
         page_num = 1
 
 
