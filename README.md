@@ -1,17 +1,13 @@
-# CZ4031-Project2
+## Installing
+It's recommended to create a virtualenv for the project first before installing the dependencies.
 
-Group 36
+`pip install -r requirements.txt`
 
-Gabriel Low Zhi You - U2022715G
-Sanskriti Verma - U2023954E
-Japhet Tan Zhi Rong - U2022037F
-Peng Weixing - U1921133E
-Zou Zeren - U2022422H
+## Run the project
+Make sure you have python3 installed (software tested with python ver. > 3.6)
+CD to the root of the project folder and run
 
+`python ./project.py`
 
-### Run the project
-
-1. In Windows CMD, navigate to the project folder
-2. Run `python project.py`
-
-
+## Connecting to database
+You will be presented with a login screen on program start.
