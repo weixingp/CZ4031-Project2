@@ -78,9 +78,9 @@ class PlanNode:
         elif node_type == "Bitmap Heap Scan":
             return BitMapHeapScanNode(cost=cost, row=rows, table_name=plan.get("Relation Name", "None"))
         elif node_type == "Hash Join":
-            return HashJoinNode(cost=cost, row=rows, cond=plan["Hash Cond"])
+            return HashJoinNode(cost=cost, row=rows, cond=plan.get("Hash Cond", ""))
         elif node_type == "Merge Join":
-            return MergeJoinNode(cost=cost, row=rows, cond=plan["Merge Cond"])
+            return MergeJoinNode(cost=cost, row=rows, cond=plan.get("Merge Cond", ""))
         elif node_type == "Aggregate":
             group_key = plan["Group Key"] if "Group Key" in plan else "None"
             return AggregateNode(cost=cost, row=rows, group_keys=group_key)
