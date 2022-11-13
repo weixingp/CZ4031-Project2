@@ -76,7 +76,16 @@ def draw_tree(tree: PlanNode, frame, no_annotation=False):
         width = 13
     else:
         width = 10
-    label = Label(frame_top, text=tree.type, fg="black", bg="white", relief=SOLID, borderwidth=1, width=width)
+
+    # change node color if the node is "is_diff"
+    if tree.is_diff:
+        box_bg = "red"
+        box_fg = "white"
+    else:
+        box_bg = "white"
+        box_fg = "black"
+
+    label = Label(frame_top, text=tree.type, fg=box_fg, bg=box_bg, relief=SOLID, borderwidth=1, width=width)
     label.pack()
 
     # Process tooltip content
@@ -142,11 +151,6 @@ def get_input():
     except Exception as ex:
         messagebox.showerror("SQL Error", ex)
         annotate_submit_btn.config(text="Annotate")
-
-
-# using this to change pages first
-def change():
-    page_change()
 
 
 def main_page(win):
@@ -225,7 +229,7 @@ def output_page(win, plan_root: PlanNode, no_annotation=False):
     frame_output_title = Frame(win, bg='#3B86A7', height=60, padx=40)
     frame_output_title.pack(fill='x')
     home_button = Button(frame_output_title, text="Back", width=5, height=1, bg="#3B86A7", fg="black", font="Inter 16",
-                         command=change)
+                         command=page_change)
     home_button.pack(side=LEFT)
     title = Label(frame_output_title, text="Query Annotation", height=2, bg="#3B86A7", fg="white", font="Inter 48")
     title.pack(side=LEFT, fill='x', expand=1)
