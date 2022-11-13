@@ -20,9 +20,9 @@ class PlanNode:
     """
     type = "Base"
 
-    def __init__(self, cost: float):
+    def __init__(self, cost: float, row: int):
         self.cost = cost
-
+        self.rows = row
         self.children: ["PlanNode"] = []
 
     def get_annotations(self):
@@ -50,19 +50,16 @@ class PlanNode:
         """
         node_type = plan["Node Type"]
         cost = plan["Total Cost"]
-
+        rows = plan.get("Plan Rows", 0)
         if node_type == "Sort":
 
-            return SortNode(cost=cost, sort_keys=plan.get("Sort Key", "None"))
+            return SortNode(cost=cost, row=rows, sort_keys=plan.get("Sort Key", "None"))
         elif node_type == "Seq Scan":
-            if "Filter" in plan:
-                f = plan["Filter"]
-            else:
-                f = "()"
             return SeqScanNode(
                 cost=cost,
+                row=rows,
                 table_name=plan.get("Relation Name", "None"),
-                q_filter=f
+                q_filter=plan.get("Filter", None),
             )
         elif node_type == "Index Scan":
             if "Index Cond" in plan:
@@ -73,26 +70,27 @@ class PlanNode:
                 cond = ""
             return IndexScanNode(
                 cost=cost,
+                row=rows,
                 table_name=plan.get("Relation Name", "None"),
                 cond=cond
             )
         elif node_type == "Bitmap Heap Scan":
-            return BitMapHeapScanNode(cost=cost, table_name=plan.get("Relation Name", "None"))
+            return BitMapHeapScanNode(cost=cost, row=rows, table_name=plan.get("Relation Name", "None"))
         elif node_type == "Hash Join":
-            return HashJoinNode(cost=cost, cond=plan["Hash Cond"])
+            return HashJoinNode(cost=cost, row=rows, cond=plan["Hash Cond"])
         elif node_type == "Merge Join":
-            return MergeJoinNode(cost=cost, cond=plan["Merge Cond"])
+            return MergeJoinNode(cost=cost, row=rows, cond=plan["Merge Cond"])
         elif node_type == "Aggregate":
             group_key = plan["Group Key"] if "Group Key" in plan else "None"
-            return AggregateNode(cost=cost, group_keys=group_key)
+            return AggregateNode(cost=cost, row=rows, group_keys=group_key)
         elif node_type == "Hash":
-            return HashNode(cost=cost)
+            return HashNode(cost=cost, row=rows)
         elif node_type == "Nested Loop":
-            return NestedLoop(cost=cost)
+            return NestedLoop(cost=cost, row=rows)
         elif node_type == "Limit":
-            return LimitNode(cost=cost)
+            return LimitNode(cost=cost, row=rows)
         else:
-            return UndefinedNode(cost=cost, type_name=plan["Node Type"])
+            return UndefinedNode(cost=cost, row=rows, type_name=plan["Node Type"])
 
     @classmethod
     def get_unique_node_types(cls, root: "PlanNode") -> list:
@@ -115,13 +113,13 @@ class PlanNode:
 class SortNode(PlanNode):
     type = "Sort"
 
-    def __init__(self, cost: float, sort_keys: list):
+    def __init__(self, cost: float, row: int, sort_keys: list):
         """
         Sort node
         :param cost: Total cost
         :param sort_keys: list of sort keys
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.sort_keys = sort_keys
 
     def get_annotations(self) -> str:
@@ -133,33 +131,33 @@ class SortNode(PlanNode):
 class SeqScanNode(PlanNode):
     type = "Seq Scan"
 
-    def __init__(self, cost: float, table_name: str, q_filter: str):
+    def __init__(self, cost: float, row: int, table_name: str, q_filter: str):
         """
         Sequential scan node
         :param cost: Total cost
         :param table_name: The table name the scan is run on
         :param q_filter: The filter the scan is run on
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.table_name = table_name
         self.q_filter = q_filter
 
     def get_annotations(self) -> str:
-        text = seq_scan_annotation(self.table_name, self.q_filter)
+        text = seq_scan_annotation(self.table_name, self.q_filter, self.rows)
         return text
 
 
 class IndexScanNode(PlanNode):
     type = "Index Scan"
 
-    def __init__(self, cost: float, table_name: str, cond: str):
+    def __init__(self, cost: float, row: int, table_name: str, cond: str):
         """
-        Index Scan scan node
+        Index Scan node
         :param cost: Total cost
         :param table_name: The table name the scan is run on
         :param cond: The condition of the scan is run on
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.table_name = table_name
         self.cond = cond
 
@@ -171,13 +169,13 @@ class IndexScanNode(PlanNode):
 class BitMapHeapScanNode(PlanNode):
     type = "Bitmap Heap Scan"
 
-    def __init__(self, cost: float, table_name: str):
+    def __init__(self, cost: float, row: int, table_name: str):
         """
-        Index Scan scan node
+        Index Scan node
         :param cost: Total cost
         :param table_name: The table name the scan is run on
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.table_name = table_name
 
     def get_annotations(self) -> str:
@@ -188,13 +186,13 @@ class BitMapHeapScanNode(PlanNode):
 class HashJoinNode(PlanNode):
     type = "Hash Join"
 
-    def __init__(self, cost: float, cond: str):
+    def __init__(self, cost: float, row: int, cond: str):
         """
         Hash Join node
         :param cost: Total cost
         :param cond: The condition of the join is run on
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.cond = cond
 
     def get_annotations(self) -> str:
@@ -205,13 +203,13 @@ class HashJoinNode(PlanNode):
 class MergeJoinNode(PlanNode):
     type = "Merge Join"
 
-    def __init__(self, cost: float, cond: str):
+    def __init__(self, cost: float, row: int, cond: str):
         """
         Merge Join node
         :param cost: Total cost
         :param cond: The condition of the join is run on
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.cond = cond
 
     def get_annotations(self) -> str:
@@ -222,13 +220,13 @@ class MergeJoinNode(PlanNode):
 class AggregateNode(PlanNode):
     type = "Aggregate"
 
-    def __init__(self, cost: float, group_keys: list):
+    def __init__(self, cost: float, row: int, group_keys: list):
         """
         Aggregate scan node
         :param cost: Total cost
         :param group_keys: List group by keys
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.group_keys = group_keys
 
     def get_annotations(self) -> str:
@@ -239,12 +237,12 @@ class AggregateNode(PlanNode):
 class HashNode(PlanNode):
     type = "Hash"
 
-    def __init__(self, cost: float):
+    def __init__(self, cost: float, row: int):
         """
         Hash node
         :param cost: Total cost
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
 
     def get_annotations(self) -> str:
         text = hash_annotation()
@@ -254,12 +252,12 @@ class HashNode(PlanNode):
 class NestedLoop(PlanNode):
     type = "Nested Loop"
 
-    def __init__(self, cost: float):
+    def __init__(self, cost: float, row: int):
         """
         Nested Loop node
         :param cost: Total cost
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
 
     def get_annotations(self) -> str:
         text = nested_loop_annotation()
@@ -269,12 +267,12 @@ class NestedLoop(PlanNode):
 class LimitNode(PlanNode):
     type = "Limit"
 
-    def __init__(self, cost: float):
+    def __init__(self, cost: float, row: int):
         """
         Limit node
         :param cost: Total cost
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
 
     def get_annotations(self) -> str:
         text = limit_annotation()
@@ -284,12 +282,12 @@ class LimitNode(PlanNode):
 class UndefinedNode(PlanNode):
     type = "Undefined Node"
 
-    def __init__(self, cost: float, type_name: str = "Undefined Node"):
+    def __init__(self, cost: float, row: int, type_name: str = "Undefined Node"):
         """
         Limit node
         :param cost: Total cost
         """
-        super().__init__(cost)
+        super().__init__(cost, row)
         self.type = type_name
 
     def get_annotations(self) -> str:
