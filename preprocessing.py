@@ -38,7 +38,7 @@ class QueryPlanner:
     def generate_plans(self, sql_query: str) -> None:
         """
         Generate 1 QEP and multiple AQPs
-        Throws psycopg2.errors.SyntaxError if the sql query is invalid
+        Throws Exception if the sql query is invalid
         :param sql_query: The SQL query
         :return: None
         """
@@ -93,6 +93,7 @@ class QueryPlanner:
                 plan = self.__get_sql_query_plan(q)
                 root = self.__build_tree_from_raw_plan(plan)
                 self.alt_plan_names.append(t)
+                PlanNode.compare_trees(self.qep, root)  # mark diff
 
                 if t in join_types:
                     other_ops = [x for x in join_types if x != t]
